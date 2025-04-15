@@ -1,6 +1,6 @@
 /**
  * Dart-TaskMaster MCP Connector
- * 
+ *
  * This module provides bidirectional integration between Dart AI and TaskMaster
  * using the Model Context Protocol (MCP) with standardized JSON schema.
  */
@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 // Load environment variables
 dotenv.config();
@@ -68,7 +69,7 @@ function validateMessage(message) {
     if (!message.update_type || !['create', 'update', 'complete', 'delete'].includes(message.update_type)) return false;
     if (!message.timestamp) return false;
     if (!message.payload || !message.payload.status) return false;
-    
+
     return true;
   } catch (error) {
     logger.error('Error validating message:', error);
@@ -86,16 +87,16 @@ function isMessageProcessed(message) {
   if (processedMessages.has(messageId)) {
     return true;
   }
-  
+
   // Add to processed messages
   processedMessages.add(messageId);
-  
+
   // Limit cache size to prevent memory leaks
   if (processedMessages.size > 1000) {
     const iterator = processedMessages.values();
     processedMessages.delete(iterator.next().value);
   }
-  
+
   return false;
 }
 
@@ -110,18 +111,18 @@ export async function sendDartToTaskMaster(message) {
     if (!validateMessage(message)) {
       throw new Error('Invalid message format');
     }
-    
+
     // Check if already processed to prevent loops
     if (isMessageProcessed(message)) {
       logger.debug('Message already processed, skipping:', message.task_id);
       return { success: true, skipped: true };
     }
-    
+
     logger.info(`Processing Dart -> TaskMaster: ${message.update_type} for task ${message.task_id}`);
-    
+
     // Load the TaskMaster tasks
     const tasksData = await loadTaskMasterTasks();
-    
+
     // Process based on update type
     switch (message.update_type) {
       case 'create':
@@ -139,7 +140,7 @@ export async function sendDartToTaskMaster(message) {
       default:
         throw new Error(`Unsupported update type: ${message.update_type}`);
     }
-    
+
     return { success: true };
   } catch (error) {
     logger.error('Error sending message from Dart to TaskMaster:', error);
@@ -158,15 +159,15 @@ export async function sendTaskMasterToDart(message) {
     if (!validateMessage(message)) {
       throw new Error('Invalid message format');
     }
-    
+
     // Check if already processed to prevent loops
     if (isMessageProcessed(message)) {
       logger.debug('Message already processed, skipping:', message.task_id);
       return { success: true, skipped: true };
     }
-    
+
     logger.info(`Processing TaskMaster -> Dart: ${message.update_type} for task ${message.task_id}`);
-    
+
     // Process based on update type
     switch (message.update_type) {
       case 'create':
@@ -184,7 +185,7 @@ export async function sendTaskMasterToDart(message) {
       default:
         throw new Error(`Unsupported update type: ${message.update_type}`);
     }
-    
+
     return { success: true };
   } catch (error) {
     logger.error('Error sending message from TaskMaster to Dart:', error);
@@ -234,7 +235,7 @@ async function createTaskInTaskMaster(message, tasksData) {
   try {
     // Generate a new task ID if not using an existing one
     const newTaskId = tasksData.tasks.length + 1;
-    
+
     // Create the new task
     const newTask = {
       id: newTaskId,
@@ -251,13 +252,13 @@ async function createTaskInTaskMaster(message, tasksData) {
         ...message.payload.metadata
       }
     };
-    
+
     // Add the task to the tasks array
     tasksData.tasks.push(newTask);
-    
+
     // Save the updated tasks
     await saveTaskMasterTasks(tasksData);
-    
+
     logger.info(`Created task in TaskMaster: ${newTaskId}`);
   } catch (error) {
     logger.error('Error creating task in TaskMaster:', error);
@@ -277,32 +278,32 @@ async function updateTaskInTaskMaster(message, tasksData) {
     const taskIndex = tasksData.tasks.findIndex(
       task => task.metadata && task.metadata.dartId === message.task_id
     );
-    
+
     if (taskIndex === -1) {
       logger.warn(`Task not found in TaskMaster: ${message.task_id}`);
       // Create the task if it doesn't exist
       await createTaskInTaskMaster(message, tasksData);
       return;
     }
-    
+
     // Update the task
     const task = tasksData.tasks[taskIndex];
-    
+
     if (message.payload.title) task.title = message.payload.title;
     if (message.payload.description) task.description = message.payload.description;
     if (message.payload.status) task.status = mapDartStatusToTaskMaster(message.payload.status);
     if (message.payload.priority) task.priority = message.payload.priority;
-    
+
     // Update metadata
     task.metadata = {
       ...task.metadata,
       ...message.payload.metadata,
       lastUpdated: message.timestamp
     };
-    
+
     // Save the updated tasks
     await saveTaskMasterTasks(tasksData);
-    
+
     logger.info(`Updated task in TaskMaster: ${task.id}`);
   } catch (error) {
     logger.error('Error updating task in TaskMaster:', error);
@@ -322,25 +323,25 @@ async function completeTaskInTaskMaster(message, tasksData) {
     const taskIndex = tasksData.tasks.findIndex(
       task => task.metadata && task.metadata.dartId === message.task_id
     );
-    
+
     if (taskIndex === -1) {
       logger.warn(`Task not found in TaskMaster: ${message.task_id}`);
       return;
     }
-    
+
     // Update the task status to done
     tasksData.tasks[taskIndex].status = 'done';
-    
+
     // Update metadata
     tasksData.tasks[taskIndex].metadata = {
       ...tasksData.tasks[taskIndex].metadata,
       completedAt: message.timestamp,
       lastUpdated: message.timestamp
     };
-    
+
     // Save the updated tasks
     await saveTaskMasterTasks(tasksData);
-    
+
     logger.info(`Completed task in TaskMaster: ${tasksData.tasks[taskIndex].id}`);
   } catch (error) {
     logger.error('Error completing task in TaskMaster:', error);
@@ -360,18 +361,18 @@ async function deleteTaskInTaskMaster(message, tasksData) {
     const taskIndex = tasksData.tasks.findIndex(
       task => task.metadata && task.metadata.dartId === message.task_id
     );
-    
+
     if (taskIndex === -1) {
       logger.warn(`Task not found in TaskMaster: ${message.task_id}`);
       return;
     }
-    
+
     // Remove the task
     tasksData.tasks.splice(taskIndex, 1);
-    
+
     // Save the updated tasks
     await saveTaskMasterTasks(tasksData);
-    
+
     logger.info(`Deleted task in TaskMaster: ${message.task_id}`);
   } catch (error) {
     logger.error('Error deleting task in TaskMaster:', error);
@@ -394,7 +395,7 @@ async function createTaskInDart(message) {
       priority: message.payload.priority,
       // Add other fields as needed
     };
-    
+
     // Call Dart API to create the task
     const response = await fetch(`${config.dart.baseUrl}/tasks`, {
       method: 'POST',
@@ -404,15 +405,15 @@ async function createTaskInDart(message) {
       },
       body: JSON.stringify(taskData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`Dart API error: ${response.status} ${response.statusText}`);
     }
-    
+
     const result = await response.json();
-    
+
     logger.info(`Created task in Dart: ${result.id}`);
-    
+
     return result;
   } catch (error) {
     logger.error('Error creating task in Dart:', error);
@@ -429,21 +430,21 @@ async function updateTaskInDart(message) {
   try {
     // Extract the Dart task ID from the message
     const dartTaskId = message.payload.metadata?.dartId;
-    
+
     if (!dartTaskId) {
       logger.warn('No Dart task ID found in message metadata');
       // Create the task if it doesn't exist
       await createTaskInDart(message);
       return;
     }
-    
+
     // Prepare the task data for Dart API
     const taskData = {};
     if (message.payload.title) taskData.title = message.payload.title;
     if (message.payload.description) taskData.description = message.payload.description;
     if (message.payload.status) taskData.status = mapTaskMasterStatusToDart(message.payload.status);
     if (message.payload.priority) taskData.priority = message.payload.priority;
-    
+
     // Call Dart API to update the task
     const response = await fetch(`${config.dart.baseUrl}/tasks/${dartTaskId}`, {
       method: 'PATCH',
@@ -453,11 +454,11 @@ async function updateTaskInDart(message) {
       },
       body: JSON.stringify(taskData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`Dart API error: ${response.status} ${response.statusText}`);
     }
-    
+
     logger.info(`Updated task in Dart: ${dartTaskId}`);
   } catch (error) {
     logger.error('Error updating task in Dart:', error);
@@ -474,17 +475,17 @@ async function completeTaskInDart(message) {
   try {
     // Extract the Dart task ID from the message
     const dartTaskId = message.payload.metadata?.dartId;
-    
+
     if (!dartTaskId) {
       logger.warn('No Dart task ID found in message metadata');
       return;
     }
-    
+
     // Prepare the task data for Dart API
     const taskData = {
       status: 'Done' // Use the appropriate status value for Dart
     };
-    
+
     // Call Dart API to update the task
     const response = await fetch(`${config.dart.baseUrl}/tasks/${dartTaskId}`, {
       method: 'PATCH',
@@ -494,11 +495,11 @@ async function completeTaskInDart(message) {
       },
       body: JSON.stringify(taskData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`Dart API error: ${response.status} ${response.statusText}`);
     }
-    
+
     logger.info(`Completed task in Dart: ${dartTaskId}`);
   } catch (error) {
     logger.error('Error completing task in Dart:', error);
@@ -515,12 +516,12 @@ async function deleteTaskInDart(message) {
   try {
     // Extract the Dart task ID from the message
     const dartTaskId = message.payload.metadata?.dartId;
-    
+
     if (!dartTaskId) {
       logger.warn('No Dart task ID found in message metadata');
       return;
     }
-    
+
     // Call Dart API to delete the task
     const response = await fetch(`${config.dart.baseUrl}/tasks/${dartTaskId}`, {
       method: 'DELETE',
@@ -528,11 +529,11 @@ async function deleteTaskInDart(message) {
         'Authorization': `Bearer ${config.dart.apiKey}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`Dart API error: ${response.status} ${response.statusText}`);
     }
-    
+
     logger.info(`Deleted task in Dart: ${dartTaskId}`);
   } catch (error) {
     logger.error('Error deleting task in Dart:', error);
@@ -551,7 +552,7 @@ function mapDartStatusToTaskMaster(dartStatus) {
     'Doing': 'in-progress',
     'Done': 'done'
   };
-  
+
   return statusMap[dartStatus] || 'pending';
 }
 
@@ -566,7 +567,7 @@ function mapTaskMasterStatusToDart(taskMasterStatus) {
     'in-progress': 'Doing',
     'done': 'Done'
   };
-  
+
   return statusMap[taskMasterStatus] || 'To-do';
 }
 
@@ -576,7 +577,7 @@ function mapTaskMasterStatusToDart(taskMasterStatus) {
  */
 export function initMCPConnector() {
   logger.info('Initializing Dart-TaskMaster MCP Connector');
-  
+
   return {
     sendDartToTaskMaster,
     sendTaskMasterToDart,
