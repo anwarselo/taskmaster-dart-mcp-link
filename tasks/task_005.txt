@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: MCP Integration Test Task
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: This is an updated test task to verify the MCP integration between Dart and TaskMaster
+# Details:
+
+
+# Test Strategy:
+

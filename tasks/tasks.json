@@ -1,0 +1,76 @@
+{
+  "project": {
+    "name": "Dart-TaskMaster Integration Test",
+    "description": "Testing the integration between Dart and TaskMaster",
+    "version": "1.0.0",
+    "author": "Anwar Selo"
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Set up integration environment",
+      "description": "Set up the development environment for the integration",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [],
+      "details": "Install dependencies, configure environment variables, and set up the project structure.",
+      "testStrategy": "Verify that all components start successfully.",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Implement MCP connector",
+      "description": "Create the core MCP connector module",
+      "status": "in-progress",
+      "priority": "high",
+      "dependencies": [
+        1
+      ],
+      "details": "Implement bidirectional communication between Dart and TaskMaster.",
+      "testStrategy": "Test message passing in both directions.",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Create webhook handler",
+      "description": "Implement webhook handler for Dart events",
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": [
+        2
+      ],
+      "details": "Create an Express server to receive and process webhooks from Dart.",
+      "testStrategy": "Send test webhooks and verify processing.",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Test Task from Dart",
+      "description": "This is a test task created from Dart",
+      "status": "pending",
+      "priority": "high",
+      "dependencies": [],
+      "details": "",
+      "testStrategy": "",
+      "subtasks": [],
+      "metadata": {
+        "dartId": "dart-123"
+      }
+    },
+    {
+      "id": 5,
+      "title": "MCP Integration Test Task",
+      "description": "This is an updated test task to verify the MCP integration between Dart and TaskMaster",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [],
+      "details": "",
+      "testStrategy": "",
+      "subtasks": [],
+      "metadata": {
+        "dartId": "L8orfeFHrZGT",
+        "lastUpdated": "2025-04-15T20:44:05.587Z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement MCP connector
+# Status: in-progress
+# Dependencies: 1
+# Priority: high
+# Description: Create the core MCP connector module
+# Details:
+Implement bidirectional communication between Dart and TaskMaster.
+
+# Test Strategy:
+Test message passing in both directions.
