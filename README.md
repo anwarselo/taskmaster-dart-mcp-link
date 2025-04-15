@@ -48,6 +48,8 @@ The integration consists of several components:
 
 ### Starting the Integration
 
+#### Manual Start
+
 ```bash
 node integrations/dart-taskmaster/index.js
 ```
@@ -56,6 +58,44 @@ This will start:
 - The MCP server on port 3100 (configurable)
 - The webhook server on port 3101 (configurable)
 - The TaskMaster listener that monitors for task changes
+
+#### Automatic Startup (Recommended)
+
+The integration can be configured to start automatically on system boot:
+
+1. Install PM2 globally:
+   ```bash
+   npm install -g pm2
+   ```
+
+2. Start the integration with PM2:
+   ```bash
+   cd integrations/dart-taskmaster
+   pm2 start index.js --name "dart-taskmaster-integration" --time
+   pm2 save
+   ```
+
+3. Set up PM2 to start on system boot:
+   ```bash
+   # For macOS
+   pm2 startup launchd
+
+   # For Linux
+   pm2 startup
+
+   # For Windows
+   pm2 startup windows
+   ```
+
+4. Follow the instructions provided by the startup command
+
+#### Managing the Integration with PM2
+
+- Check status: `pm2 status`
+- View logs: `pm2 logs dart-taskmaster-integration`
+- Restart: `pm2 restart dart-taskmaster-integration`
+- Stop: `pm2 stop dart-taskmaster-integration`
+- Start: `pm2 start dart-taskmaster-integration`
 
 ### Using as a Module
 
