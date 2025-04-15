@@ -1,0 +1,27 @@
+{
+  "name": "dart-taskmaster-mcp-link",
+  "version": "1.0.0",
+  "description": "Bidirectional integration between Dart AI and TaskMaster using MCP",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dart",
+    "taskmaster",
+    "mcp",
+    "integration",
+    "project-management"
+  ],
+  "author": "Anwar Selo",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "fastmcp": "^1.20.5",
+    "helmet": "^8.1.0"
+  }
+}

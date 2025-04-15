@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dart-TaskMaster Integration Schema",
+  "description": "Standardized schema for bidirectional communication between Dart and TaskMaster",
+  "type": "object",
+  "required": ["source", "task_id", "update_type", "timestamp", "payload"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["Dart", "TaskMaster"],
+      "description": "The system that originated this update"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the task (Dart ID or TaskMaster ID)"
+    },
+    "update_type": {
+      "type": "string",
+      "enum": ["create", "update", "complete", "delete"],
+      "description": "The type of update being performed"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of when the update was created"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Current status of the task"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title or name of the task"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the task"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "Priority level of the task"
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Due date for the task"
+        },
+        "assignee": {
+          "type": "string",
+          "description": "Person assigned to the task"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional system-specific metadata"
+        }
+      }
+    }
+  }
+}
